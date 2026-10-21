@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="班级工作台" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="theme-color" content="#f5f6f7" />
+<title>班级工作台</title>
+<style>
+:root{
+  --bg:#f5f6f7;
+  --card:#ffffff;
+  --line:#e6e8eb;
+  --text:#1b1f24;
+  --sub:#818a94;
+  --brand:#2f7a6b;
+  --brand-soft:#eaf4f0;
+  --red:#cf463c;
+  --red-soft:#fbeae8;
+  --amber:#c98a1b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+button{font-family:inherit;cursor:pointer;}
+input,textarea{font-family:inherit;}
+
+#app{
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;
+  max-width:860px;margin:0 auto;
+  background:var(--bg);
+  padding-top:env(safe-area-inset-top);
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px 6px;}
+.clsbtn{
+  display:flex;align-items:center;gap:6px;
+  background:#fff;border:1px solid var(--line);border-radius:11px;
+  height:36px;padding:0 12px;font-size:15px;font-weight:600;color:var(--text);
+  max-width:70%;
+}
+.clsbtn .car{font-size:10px;color:#b9c0c7;margin-left:auto;}
+.clsbtn span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spacer{flex:1;}
+.iconbtn{
+  height:36px;min-width:34px;padding:0 12px;border-radius:11px;border:1px solid var(--line);
+  background:#fff;font-size:13.5px;color:var(--sub);font-weight:500;
+}
+
+/* ---------- 任务条 ---------- */
+.taskbar{display:flex;align-items:center;gap:8px;padding:2px 14px 8px;}
+.taskbtn{
+  flex:1;display:flex;align-items:center;gap:8px;min-width:0;
+  background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:0 12px;height:44px;text-align:left;
+}
+.tname{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;}
+.tdate{font-size:12px;color:var(--sub);flex:0 0 auto;}
+.car{color:#b9c0c7;font-size:10px;flex:0 0 auto;}
+.addbtn{
+  width:44px;height:44px;flex:0 0 auto;border-radius:12px;border:none;
+  background:var(--brand);color:#fff;font-size:24px;line-height:1;
+  display:flex;align-items:center;justify-content:center;font-weight:300;
+}
+
+/* ---------- 状态条 ---------- */
+.statusbar{
+  display:flex;align-items:center;gap:10px;padding:0 16px 9px;
+  font-size:13px;color:var(--sub);
+}
+.statusbar b{font-size:16px;font-weight:700;margin-right:5px;}
+.statusbar .bad{color:#a3362e;}
+.statusbar .bad b{color:var(--red);}
+.statusbar .good{color:#22604f;}
+.statusbar .good b{color:var(--brand);}
+.statusbar .sep{color:#d6dade;}
+.statusbar .more{
+  margin-left:auto;width:32px;height:32px;border-radius:9px;border:none;
+  background:transparent;color:var(--sub);font-size:17px;letter-spacing:1px;
+  display:flex;align-items:center;justify-content:center;
+}
+.statusbar .link{
+  border:none;background:none;padding:2px;color:var(--brand);font-size:12.5px;font-weight:600;
+}
+
+/* ---------- 学生网格 ---------- */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 18px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px;}
+.stu{
+  position:relative;height:50px;border-radius:11px;
+  border:1px solid var(--line);background:#fff;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:14.5px;font-weight:500;color:var(--text);
+  padding:2px 3px;line-height:1.15;overflow:hidden;word-break:break-all;
+  transition:background .14s,border-color .14s,color .14s,transform .16s,opacity .16s;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.stu:active{transform:scale(.94);}
+.stu.note::after{
+  content:"";position:absolute;top:4px;right:5px;width:5px;height:5px;border-radius:50%;
+  background:#e08b2c;
+}
+/* 作业：未交 */
+.stu.bad{background:var(--red-soft);border-color:#efcac6;color:#a3362e;font-weight:600;}
+/* 过关：消失 */
+.stu.gone{transform:scale(.6);opacity:0;pointer-events:none;}
+
+.empty{
+  grid-column:1/-1;text-align:center;padding:60px 16px;color:var(--sub);
+  font-size:14px;line-height:2;
+}
+.alldone{
+  grid-column:1/-1;text-align:center;padding:70px 16px;
+}
+.alldone .big{font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px;}
+.alldone .sub{font-size:13px;color:var(--sub);margin-top:10px;}
+
+/* ---------- 底部模块栏 ---------- */
+.tabbar{
+  display:flex;background:#fff;border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -1px 0 rgba(0,0,0,.02);
+}
+.tab{
+  flex:1;height:58px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:none;border:none;font-size:12.5px;color:var(--sub);
+  position:relative;font-weight:500;
+}
+.tab.on{color:var(--brand);font-weight:700;}
+.tab .badge{
+  position:absolute;top:6px;left:50%;margin-left:12px;
+  min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;
+  font-size:10.5px;line-height:16px;text-align:center;padding:0 4px;font-weight:600;
+}
+.tab .badge.gray{background:#c2c8ce;}
+
+/* ---------- 统计 ---------- */
+.statwrap{padding:2px 0 6px;}
+.statmeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;padding:3px 9px;border-radius:999px;
+  background:#fff;border:1px solid var(--line);color:var(--sub);
+}
+.chip b{font-size:13px;font-weight:700;}
+.chip.no{color:#9b2c26;border-color:#f1cec9;background:#fcedeb;}
+.chip.ok{color:#1c5648;border-color:#cbe5dc;background:#eef7f4;}
+.stbl{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:12px;overflow:hidden;}
+.stbl th{
+  font-size:11.5px;color:var(--sub);font-weight:500;padding:10px 2px;text-align:center;
+  border-bottom:1px solid var(--line);background:#fafbfb;line-height:1.35;
+}
+.stbl th small{display:block;font-size:10.5px;color:#a6aeb6;font-weight:400;}
+.stbl th:first-child{text-align:left;padding-left:10px;width:62px;}
+.stbl td{padding:9px 2px;text-align:center;border-bottom:1px solid #f2f4f5;}
+.stbl td:first-child{text-align:left;padding-left:10px;font-weight:500;font-size:14px;}
+.stbl tr:last-child td{border-bottom:none;}
+.stbl tbody tr{cursor:pointer;}
+.stbl tbody tr:active{background:#f5f8f7;}
+.num{font-weight:700;font-size:14.5px;color:var(--red);}
+.num.zero{color:#cdd3d8;font-weight:400;}
+.hint{font-size:12px;color:var(--sub);padding:14px 2px 4px;line-height:1.6;}
+
+/* 历史 */
+.histlist{padding:0 12px 4px;}
+.histrow{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #f2f4f5;}
+.histrow:last-child{border-bottom:none;}
+.hl{flex:1;min-width:0;}
+.ht{font-size:14.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hm{font-size:12px;color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.histbadge{flex:0 0 auto;font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600;}
+.histbadge.ok{background:var(--brand-soft);color:#22604f;}
+.histbadge.no{background:var(--red-soft);color:#96291f;}
+
+/* ---------- 弹层 ---------- */
+.mask{
+  position:fixed;inset:0;background:rgba(18,24,30,.36);
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;
+}
+.mask.on{opacity:1;pointer-events:auto;}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;
+  background:#fff;border-radius:20px 20px 0 0;
+  transform:translateY(102%);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);
+  max-height:86dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:env(safe-area-inset-bottom);
+  max-width:860px;margin:0 auto;
+  box-shadow:0 -6px 28px rgba(0,0,0,.10);
+}
+.sheet.on{transform:translateY(0);}
+.sheet::before{
+  content:"";display:block;width:36px;height:4px;border-radius:2px;
+  background:#e4e7ea;margin:9px auto 0;
+}
+.sheet-title{font-size:17px;font-weight:700;padding:14px 18px 6px;}
+.sheet-sub{font-size:12.5px;color:var(--sub);padding:0 18px 10px;line-height:1.6;}
+.sheet-actions{display:flex;gap:10px;padding:14px 18px calc(16px + env(safe-area-inset-bottom));}
+.btn{
+  flex:1;height:46px;border-radius:12px;font-size:15px;font-weight:600;
+  border:1px solid var(--line);background:#fff;color:var(--text);
+}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+.btn.ghost{background:#fff;}
+.btn.danger{background:#fff;color:var(--red);border-color:#f0cfcb;}
+.btn.wide{width:100%;flex:none;margin-bottom:8px;}
+
+.ta,.inp{
+  width:calc(100% - 36px);margin:0 18px;
+  border:1px solid var(--line);border-radius:12px;padding:12px;
+  font-size:15px;line-height:1.65;background:#fbfbfc;color:var(--text);
+  resize:vertical;outline:none;
+}
+.ta:focus,.inp:focus{border-color:var(--brand);background:#fff;}
+.inp{height:46px;padding:0 12px;}
+
+.tlist{padding:0 12px 4px;}
+.dhead{font-size:12px;color:var(--sub);font-weight:600;padding:10px 2px 6px;}
+.dhead:first-child{padding-top:2px;}
+.trow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.tmain{
+  flex:1;display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  background:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:11px;
+  text-align:left;min-width:0;
+}
+.trow.on .tmain{background:var(--brand-soft);border-color:#b9dcd1;}
+.tt{font-size:14.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.tm{font-size:12px;color:var(--sub);}
+.tmini{
+  height:34px;padding:0 9px;border-radius:9px;border:1px solid var(--line);
+  background:#fff;font-size:12.5px;color:var(--sub);flex:0 0 auto;
+}
+.tmini.danger{color:var(--red);border-color:#f0cfcb;}
+
+.clist{padding:2px 12px 4px;}
+.crow{
+  display:flex;justify-content:space-between;align-items:center;width:100%;
+  padding:14px 16px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;font-size:15.5px;font-weight:600;color:var(--text);margin-bottom:8px;
+}
+.crow.on{border-color:var(--brand);background:var(--brand-soft);}
+.crow em{font-style:normal;font-size:12.5px;color:var(--sub);font-weight:400;}
+
+.setsec{padding:2px 18px 6px;}
+.setlabel{font-size:12.5px;color:var(--sub);font-weight:600;margin:14px 0 7px;}
+.setsec .ta,.setsec .inp{width:100%;margin:0;}
+
+/* 通过名单弹层 */
+.passgrid{display:flex;flex-wrap:wrap;gap:8px;padding:4px 18px 10px;}
+.passchip{
+  padding:8px 12px;border-radius:10px;border:1px solid #cbe5dc;background:#eef7f4;
+  font-size:14px;color:#1c5648;font-weight:500;
+}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));
+  transform:translate(-50%,12px);background:rgba(28,33,38,.92);color:#fff;
+  font-size:13.5px;padding:9px 16px;border-radius:10px;z-index:99;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:80%;
+  text-align:center;line-height:1.5;
+}
+#toast.on{opacity:1;transform:translate(-50%,0);}
+
+@media (min-width:700px){
+  .grid{grid-template-columns:repeat(10,1fr);}
+  .stu{height:54px;font-size:15px;}
+  .tab{font-size:14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <button class="clsbtn" id="clsBtn"><span id="clsName">班级</span><span class="car">▾</span></button>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="setBtn">设置</button>
+  </div>
+
+  <div class="taskbar" id="taskbar">
+    <button class="taskbtn" id="taskBtn">
+      <span class="tname" id="taskName">载入中</span>
+      <span class="tdate" id="taskDate"></span>
+      <span class="car">▾</span>
+    </button>
+    <button class="addbtn" id="addTaskBtn" aria-label="新建">+</button>
+  </div>
+
+  <div class="statusbar" id="statusBar"></div>
+
+  <main class="scroll" id="main">
+    <div class="grid" id="grid"></div>
+    <div class="statwrap" id="statBox" style="display:none"></div>
+  </main>
+
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet"><div id="sheetBody"></div></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= 常量 ======================= */
+var LS_KEY = 'classboard.v1';
+
+var MODULES = {
+  homework:   { label:'作业提交', noun:'作业', mode:'mark', markLabel:'未交', okLabel:'已交' },
+  correction: { label:'作业订正', noun:'订正', mode:'mark', markLabel:'未订正', okLabel:'已订正' },
+  recite:     { label:'背诵', noun:'背诵', mode:'pass', markLabel:'未过关', okLabel:'过关' },
+  dictation:  { label:'默写', noun:'默写', mode:'pass', markLabel:'未过关', okLabel:'过关' }
+};
+var MKEYS = ['homework','correction','recite','dictation'];
+
+/* ======================= 工具 ======================= */
+function $(s, r){ return (r||document).querySelector(s); }
+function pad2(n){ return (n<10?'0':'')+n; }
+function uid(p){ return p+Math.random().toString(36).slice(2,9); }
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+}
+function fmtDate(s){
+  if(!s) return '';
+  var p = String(s).split('-');
+  if(p.length < 3) return s;
+  return (+p[1])+'/'+(+p[2]);
+}
+function dayLabel(s){
+  var p = String(s || '').split('-');
+  if(p.length < 3) return s || '';
+  var y = new Date().getFullYear();
+  var pre = (Number(p[0]) === y) ? '' : p[0] + '年';
+  return pre + (+p[1]) + '月' + (+p[2]) + '日';
+}
+
+var toastTimer;
+function toast(msg){
+  var el = $('#toast');
+  if(!el){ el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 1900);
+}
+
+/* ======================= 名册 ======================= */
+var SEED = [
+  {
+    name: '三（1）班',
+    students: [
+      '陈凯森','陈叶洋','陈子琦','葛云硕','何易霏','户奕腾','黄策启','李泽成',
+      '林祖安','刘斯年','刘友灵','刘芷彤','彭梓舰','齐浚希','乔嘉淇','陶子渊',
+      '魏子逸','吴家乐','吴醒','吴艺雯','许亦甜','杨馥瑜','杨梓宁','于欣',
+      '张梓妍','赵奕昂','赵子莹','周柏灵','李文澜','黄何孟夏','邰浩棋','黄靖廉',
+      '鄧日斯','胡雨霏'
+    ]
+  },
+  {
+    name: '二（1）班',
+    students: [
+      '张艺康','简悦然','罗郑旸','雷伊一','李宛瞳','徐睿泽','景睿熙','岑泽朗',
+      '邓明文','韩烨然','田予恒','晏枢','徐铭泽','吴柔静','余洛淇','姜雨馨',
+      '翟家','张煦','张子烨','龙昱言','凌彬尧','温哲宇','熊皓宇','黄家闻',
+      '林嘉骏','邬佩怡','张航旗','梁响响','欧智杰','金筱晴','刘宸妍','任泽宇',
+      '徐浩然','王玥','何婧宁','赵锦舟','郝欣愿','方睿'
+    ]
+  }
+];
+
+function seedStudents(list){
+  return list.map(function(n){ return { id: uid('s'), name: n }; });
+}
+
+/* ======================= 数据 ======================= */
+function defaultDB(){
+  var classes = SEED.map(function(c){
+    return { id: uid('c'), name: c.name, students: seedStudents(c.students) };
+  });
+  return {
+    v: 3,
+    classes: classes,
+    activeClass: classes[0].id,
+    module: 'homework',
+    tasks: { homework:[], correction:[], recite:[], dictation:[] },
+    records: {},
+    notes: {},
+    activeTask: { homework:null, correction:null, recite:null, dictation:null }
+  };
+}
+
+function upgradeSeed(d){
+  if(d.classes.length !== 2) return;
+  var untouched = d.classes.every(function(c){
+    return (c.name === '一班' || c.name === '二班') && (!c.students || !c.students.length);
+  });
+  if(!untouched) return;
+  SEED.forEach(function(s, i){
+    var c = d.classes[i];
+    if(!c) return;
+    c.name = s.name;
+    c.students = seedStudents(s.students);
+  });
+}
+
+/* 旧版三态（1已交/2部分/3未交）→ 两态标记 */
+function migrateRecords(d){
+  MKEYS.forEach(function(k){
+    var mode = MODULES[k].mode;
+    (d.tasks[k] || []).forEach(function(t){
+      var rec = d.records[t.id];
+      if(!rec) return;
+      var out = {};
+      Object.keys(rec).forEach(function(sid){
+        var v = rec[sid];
+        if(mode === 'mark'){
+          if(v === 2 || v === 3) out[sid] = 1;
+        } else {
+          if(v === 1) out[sid] = 1;
+        }
+      });
+      if(Object.keys(out).length) d.records[t.id] = out;
+      else delete d.records[t.id];
+    });
+  });
+}
+
+function normalize(d){
+  var base = defaultDB();
+  if(!d || typeof d !== 'object') return base;
+  if(!Array.isArray(d.classes) || !d.classes.length) d.classes = base.classes;
+  d.classes = d.classes.map(function(c){
+    var stus = (c.students||[]).map(function(s){
+      if(typeof s === 'string') return { id: uid('s'), name: s };
+      return { id: s.id || uid('s'), name: s.name || '' };
+    }).filter(function(s){ return s.name; });
+    return { id: c.id || uid('c'), name: c.name || '未命名班级', students: stus };
+  });
+  if((d.v || 1) < 2) upgradeSeed(d);
+  if(!d.classes.some(function(c){ return c.id === d.activeClass; })) d.activeClass = d.classes[0].id;
+  if(d.module !== 'stats' && MKEYS.indexOf(d.module) < 0) d.module = 'homework';
+  d.tasks = d.tasks || {};
+  MKEYS.forEach(function(k){ if(!Array.isArray(d.tasks[k])) d.tasks[k] = []; });
+  d.records = d.records || {};
+  d.notes = d.notes || {};
+  d.activeTask = d.activeTask || {};
+  MKEYS.forEach(function(k){ if(!(k in d.activeTask)) d.activeTask[k] = null; });
+  if((d.v || 1) < 3) migrateRecords(d);
+  d.v = 3;
+  return d;
+}
+
+var db;
+try {
+  var raw = localStorage.getItem(LS_KEY);
+  db = raw ? normalize(JSON.parse(raw)) : defaultDB();
+} catch(e) {
+  db = defaultDB();
+}
+
+function save(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(db)); }
+  catch(e){ toast('保存失败，存储空间可能已满'); }
+}
+
+/* ======================= 当前状态 ======================= */
+var filterBad = false;   // 只看未交（作业类）
+var longFired = false;
+var pressTimer = null;
+
+function curClass(){
+  for(var i=0;i<db.classes.length;i++){ if(db.classes[i].id === db.activeClass) return db.classes[i]; }
+  return db.classes[0];
+}
+function curTasks(){ return db.tasks[db.module] || []; }
+function curTask(){
+  var list = curTasks();
+  for(var i=0;i<list.length;i++){ if(list[i].id === db.activeTask[db.module]) return list[i]; }
+  return null;
+}
+function countRec(tid){
+  var r = db.records[tid];
+  return r ? Object.keys(r).length : 0;
+}
+function makeTask(k, auto, title){
+  var d = todayStr();
+  return {
+    id: uid('t'),
+    title: title || (fmtDate(d) + ' ' + MODULES[k].noun),
+    date: d,
+    auto: !!auto,
+    createdAt: Date.now()
+  };
+}
+function ensureTask(){
+  var k = db.module;
+  if(k === 'stats') return;
+  if(!db.tasks[k].length){
+    var t = makeTask(k, true);
+    db.tasks[k].unshift(t);
+    db.activeTask[k] = t.id;
+    save();
+  }
+  var found = db.tasks[k].some(function(t){ return t.id === db.activeTask[k]; });
+  if(!found) db.activeTask[k] = db.tasks[k][0].id;
+}
+function pruneAutoEmpty(){
+  MKEYS.forEach(function(k){
+    var act = db.activeTask[k];
+    db.tasks[k] = db.tasks[k].filter(function(t){
+      if(t.id === act) return true;
+      if(t.auto && countRec(t.id) === 0){
+        delete db.records[t.id];
+        delete db.notes[t.id];
+        return false;
+      }
+      return true;
+    });
+  });
+}
+
+/* 某任务的统计：marked = 被点过的人数 */
+function statOf(tid, cls){
+  var rec = db.records[tid] || {};
+  var total = cls.students.length;
+  var marked = 0;
+  cls.students.forEach(function(s){ if(rec[s.id]) marked++; });
+  return { total: total, marked: marked };
+}
+function doneCount(k, cls){
+  var tid = db.activeTask[k];
+  if(!tid) return { done:0, total:cls.students.length };
+  var st = statOf(tid, cls);
+  var M = MODULES[k];
+  return M.mode === 'mark'
+    ? { done: st.total - st.marked, total: st.total }
+    : { done: st.marked, total: st.total };
+}
+
+/* ======================= 渲染 ======================= */
+function renderAll(){
+  renderClsBtn();
+  renderTabs();
+  renderMain();
+}
+
+function renderClsBtn(){ $('#clsName').textContent = curClass().name; }
+
+function renderTabs(){
+  var cls = curClass();
+  var html = MKEYS.map(function(k){
+    var d = doneCount(k, cls);
+    var left = d.total - d.done;
+    var badge = (db.activeTask[k] && left > 0)
+      ? '<span class="badge">' + left + '</span>' : '';
+    return '<button class="tab' + (db.module===k?' on':'') + '" data-mod="' + k + '">' +
+      MODULES[k].label + badge + '</button>';
+  }).join('');
+  html += '<button class="tab' + (db.module==='stats'?' on':'') + '" data-mod="stats">统计</button>';
+  $('#tabbar').innerHTML = html;
+}
+
+function renderMain(){
+  var isStats = (db.module === 'stats');
+  $('#taskbar').style.display = isStats ? 'none' : 'flex';
+  $('#statusBar').style.display = isStats ? 'none' : 'flex';
+  $('#grid').style.display = isStats ? 'none' : 'grid';
+  $('#statBox').style.display = isStats ? 'block' : 'none';
+
+  if(isStats){ renderStats(); return; }
+
+  ensureTask();
+  var cls = curClass(), t = curTask(), M = MODULES[db.module];
+  $('#taskName').textContent = t ? t.title : '新建一项';
+  var ds = t ? fmtDate(t.date) : '';
+  $('#taskDate').textContent = (t && t.title.indexOf(ds) < 0) ? ds : '';
+
+  renderStatus();
+  renderGrid();
+}
+
+function renderStatus(){
+  var cls = curClass(), t = curTask(), M = MODULES[db.module];
+  var st = t ? statOf(t.id, cls) : { total: cls.students.length, marked: 0 };
+  var bar = $('#statusBar');
+
+  if(M.mode === 'pass'){
+    var done = st.marked, left = st.total - done;
+    bar.innerHTML =
+      '<span class="good"><b>' + done + '</b>' + M.okLabel + '</span>' +
+      '<span class="sep">·</span>' +
+      '<span class="bad"><b>' + left + '</b>人未' + (M.okLabel === '过关' ? '过关' : '完成') + '</span>' +
+      (done ? '<button class="link" data-act="passed">查看</button>' : '') +
+      '<button class="more" data-act="more">⋯</button>';
+  } else {
+    var bad = st.marked, good = st.total - bad;
+    bar.innerHTML =
+      '<span class="bad"><b>' + bad + '</b>' + M.markLabel + '</span>' +
+      '<span class="sep">·</span>' +
+      '<span class="good"><b>' + good + '</b>' + M.okLabel + '</span>' +
+      (bad ? '<button class="link" data-act="onlybad">' + (filterBad ? '看全部' : '只看') + '</button>' : '') +
+      '<button class="more" data-act="more">⋯</button>';
+  }
+}
+
+function renderGrid(){
+  var cls = curClass(), k = db.module, M = MODULES[k], t = curTask();
+  var g = $('#grid');
+
+  if(!cls.students.length){
+    g.innerHTML = '<div class="empty">这个班还没有学生名单<br><button class="linkbtn" data-act="settings">去设置里粘贴名单</button></div>';
+    return;
+  }
+
+  var rec = t ? (db.records[t.id] || {}) : {};
+  var notes = t ? (db.notes[t.id] || {}) : {};
+  var list;
+
+  if(M.mode === 'pass'){
+    list = cls.students.filter(function(s){ return !rec[s.id]; });
+    if(!list.length){
+      g.innerHTML = '<div class="alldone"><div class="big">全部' + M.okLabel + '了</div>' +
+        '<div class="sub">' + cls.students.length + ' 人 · 点上方「查看」可撤销</div></div>';
+      return;
+    }
+  } else {
+    list = cls.students;
+    if(filterBad) list = list.filter(function(s){ return rec[s.id]; });
+    if(!list.length){
+      g.innerHTML = '<div class="alldone"><div class="big">' + M.markLabel + ' 0 人</div>' +
+        '<div class="sub">全班都' + M.okLabel + '了</div></div>';
+      return;
+    }
+  }
+
+  g.innerHTML = list.map(function(s){
+    var marked = !!rec[s.id];
+    var cls2 = M.mode === 'mark' ? (marked ? ' bad' : '') : '';
+    var note = notes[s.id] ? ' note' : '';
+    return '<button class="stu' + cls2 + note + '" data-id="' + s.id + '">' + esc(s.name) + '</button>';
+  }).join('');
+}
+
+/* ---------- 统计 ---------- */
+function collectStats(cls){
+  var data = {};
+  cls.students.forEach(function(s){
+    data[s.id] = {};
+    MKEYS.forEach(function(k){ data[s.id][k] = { done:0, left:0 }; });
+  });
+  var taskCount = 0;
+  MKEYS.forEach(function(k){
+    var M = MODULES[k];
+    db.tasks[k].forEach(function(t){
+      var rec = db.records[t.id] || {};
+      var has = false;
+      cls.students.forEach(function(s){
+        var marked = !!rec[s.id];
+        var isDone = (M.mode === 'mark') ? !marked : marked;
+        if(marked) has = true;
+        if(isDone) data[s.id][k].done++; else if(marked) data[s.id][k].left++;
+      });
+      if(has) taskCount++;
+    });
+  });
+  return { data: data, taskCount: taskCount };
+}
+
+function renderStats(){
+  var cls = curClass();
+  var st = collectStats(cls);
+  var short = { homework:'作业', correction:'订正', recite:'背诵', dictation:'默写' };
+  var head = '<th>学生</th>';
+  MKEYS.forEach(function(k){
+    head += '<th>' + short[k] + '<small>未完成</small></th>';
+  });
+
+  var body = cls.students.map(function(s){
+    var tds = MKEYS.map(function(k){
+      var o = st.data[s.id][k];
+      return o.left > 0
+        ? '<td><span class="num">' + o.left + '</span></td>'
+        : '<td><span class="num zero">—</span></td>';
+    }).join('');
+    return '<tr data-sid="' + s.id + '"><td>' + esc(s.name) + '</td>' + tds + '</tr>';
+  }).join('');
+
+  var total = 0;
+  cls.students.forEach(function(s){
+    MKEYS.forEach(function(k){ total += st.data[s.id][k].left; });
+  });
+
+  $('#statBox').innerHTML =
+    '<div class="statmeta">' +
+      '<span class="chip"><b>' + cls.students.length + '</b>名学生</span>' +
+      '<span class="chip"><b>' + st.taskCount + '</b>项已登记</span>' +
+      '<span class="chip no"><b>' + total + '</b>次未完成</span>' +
+    '</div>' +
+    (cls.students.length
+      ? '<table class="stbl"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>'
+      : '<div class="empty">这个班还没有学生名单</div>') +
+    '<div class="hint">数字是该学生累计未完成次数。点名字可看每一项的明细。</div>' +
+    '<div style="display:flex;gap:10px;padding:14px 0 4px">' +
+      '<button class="btn ghost" id="expSum">导出汇总</button>' +
+      '<button class="btn ghost" id="expDetail">导出明细</button>' +
+    '</div>';
+
+  $('#expSum').onclick = exportSummary;
+  $('#expDetail').onclick = exportDetail;
+}
+
+/* ======================= 交互 ======================= */
+function tapStudent(el){
+  var t = curTask();
+  if(!t) return;
+  var k = db.module, M = MODULES[k];
+  var sid = el.dataset.id;
+  var rec = db.records[t.id] || (db.records[t.id] = {});
+  var marked = !!rec[sid];
+
+  if(M.mode === 'pass'){
+    if(marked){
+      delete rec[sid];
+      el.classList.remove('gone');
+      renderGrid();
+    } else {
+      rec[sid] = 1;
+      el.classList.add('gone');
+      setTimeout(function(){
+        if(el.parentNode) el.remove();
+      }, 200);
+      save();
+      renderStatus(); renderTabs();
+      return;
+    }
+  } else {
+    if(marked){ delete rec[sid]; el.classList.remove('bad'); }
+    else { rec[sid] = 1; el.classList.add('bad'); }
+    if(filterBad) renderGrid();
+  }
+  save();
+  renderStatus(); renderTabs();
+}
+
+/* ---------- 弹层 ---------- */
+function openSheet(html){
+  $('#sheetBody').innerHTML = html;
+  $('#mask').classList.add('on');
+  $('#sheet').classList.add('on');
+}
+function closeSheet(){
+  $('#mask').classList.remove('on');
+  $('#sheet').classList.remove('on');
+}
+function confirmSheet(msg, onOk){
+  openSheet('<div class="sheet-title">' + esc(msg) + '</div>' +
+    '<div class="sheet-actions"><button class="btn ghost" data-close>取消</button>' +
+    '<button class="btn danger" id="okBtn">确定</button></div>');
+  $('#okBtn').onclick = function(){ closeSheet(); if(onOk) onOk(); };
+}
+function askText(title, value, cb){
+  openSheet('<div class="sheet-title">' + esc(title) + '</div>' +
+    '<input class="inp" id="askInput" value="' + esc(value || '') + '" style="margin-top:6px" />' +
+    '<div class="sheet-actions"><button class="btn ghost" data-close>取消</button>' +
+    '<button class="btn primary" id="askOk">确定</button></div>');
+  var inp = $('#askInput');
+  setTimeout(function(){ try{ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){} }, 120);
+  function ok(){
+    var v = inp.value.trim();
+    if(!v){ inp.focus(); return; }
+    closeSheet(); cb(v);
+  }
+  $('#askOk').onclick = ok;
+  inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); ok(); } });
+}
+
+/* ---------- 班级 ---------- */
+function openClassList(){
+  var html = db.classes.map(function(c){
+    var on = c.id === db.activeClass ? ' on' : '';
+    return '<button class="crow' + on + '" data-cls="' + c.id + '"><span>' + esc(c.name) + '</span><em>' + c.students.length + ' 人</em></button>';
+  }).join('');
+  openSheet('<div class="sheet-title">切换班级</div>' +
+    '<div class="clist">' + html + '</div>' +
+    '<div class="sheet-actions"><button class="btn ghost" id="toSet">班级设置</button>' +
+    '<button class="btn primary" data-close>关闭</button></div>');
+  $('#toSet').onclick = function(){ closeSheet(); setTimeout(openSettings, 220); };
+}
+
+/* ---------- 登记项 ---------- */
+function openTaskList(){
+  var k = db.module, M = MODULES[k], list = db.tasks[k];
+
+  var groups = {};
+  list.forEach(function(t){ (groups[t.date] = groups[t.date] || []).push(t); });
+  var dates = Object.keys(groups).sort().reverse();
+
+  var html = dates.map(function(d){
+    var rows = groups[d].map(function(t){
+      var on = t.id === db.activeTask[k] ? ' on' : '';
+      var n = countRec(t.id);
+      return '<div class="trow' + on + '">' +
+        '<button class="tmain" data-pick="' + t.id + '">' +
+          '<span class="tt">' + esc(t.title) + '</span>' +
+          '<span class="tm">' + (n ? n + ' 条记录' : '还没登记') + '</span>' +
+        '</button>' +
+        '<button class="tmini" data-rename="' + t.id + '">改名</button>' +
+        '<button class="tmini danger" data-deltask="' + t.id + '">删除</button>' +
+      '</div>';
+    }).join('');
+    return '<div class="dhead">' + dayLabel(d) + '</div>' + rows;
+  }).join('');
+
+  openSheet('<div class="sheet-title">' + M.label + ' · 登记项</div>' +
+    '<div class="sheet-sub">点一项切换，或新建一项。标题随便写，比如「第12课生字抄写」。</div>' +
+    '<div class="tlist">' + (html || '<div class="empty" style="padding:26px 0">还没有登记项</div>') + '</div>' +
+    '<div class="sheet-actions"><button class="btn primary" id="newTaskIn">+ 新建登记项</button></div>');
+
+  $('#newTaskIn').onclick = newTaskFlow;
+}
+
+function newTaskFlow(){
+  var k = db.module, M = MODULES[k];
+  askText('新建' + M.label + '登记项', '', function(v){
+    var t = makeTask(k, false, v);
+    db.tasks[k].unshift(t);
+    db.activeTask[k] = t.id;
+    filterBad = false;
+    save();
+    renderMain(); renderTabs();
+    toast('已新建：' + v);
+  });
+}
+
+/* ---------- 学生详情 / 备注 ---------- */
+function openStudentSheet(sid){
+  var t = curTask(), cls = curClass(), M = MODULES[db.module];
+  if(!t) return;
+  var s = null;
+  cls.students.forEach(function(x){ if(x.id === sid) s = x; });
+  if(!s) return;
+
+  var rec = db.records[t.id] || {};
+  var marked = !!rec[sid];
+  var note = (db.notes[t.id] || {})[sid] || '';
+  var isDone = (M.mode === 'mark') ? !marked : marked;
+
+  var toggleLabel = isDone ? (M.mode === 'mark' ? '改成' + M.markLabel : '撤销' + M.okLabel) 
+                           : (M.mode === 'mark' ? '恢复' + M.okLabel : '标为' + M.okLabel);
+
+  openSheet('<div class="sheet-title">' + esc(s.name) + '</div>' +
+    '<div class="sheet-sub">当前：' + (isDone ? M.okLabel : M.markLabel) + '</div>' +
+    '<div class="setsec" style="padding:0 18px">' +
+      '<div class="setlabel" style="margin-top:4px">备注</div>' +
+      '<textarea class="ta" id="noteInput" rows="3" placeholder="例如：缺第3题、家长未签、明天补…">' + esc(note) + '</textarea>' +
+    '</div>' +
+    '<div class="sheet-actions">' +
+      '<button class="btn ghost" id="toggleBtn">' + toggleLabel + '</button>' +
+      '<button class="btn primary" id="noteSave">保存备注</button>' +
+    '</div>');
+
+  $('#toggleBtn').onclick = function(){
+    var r = db.records[t.id] || (db.records[t.id] = {});
+    if(r[sid]) delete r[sid]; else r[sid] = 1;
+    save(); closeSheet(); renderMain(); renderTabs();
+  };
+
+  $('#noteSave').onclick = function(){
+    var v = $('#noteInput').value.trim();
+    var n = db.notes[t.id] || (db.notes[t.id] = {});
+    if(v) n[sid] = v; else delete n[sid];
+    save(); closeSheet(); renderGrid();
+    if(v) toast('备注已保存');
+  };
+
+  setTimeout(function(){ longFired = false; }, 120);
+}
+
+/* ---------- 已过关名单 ---------- */
+function openPassedList(){
+  var t = curTask(), cls = curClass(), M = MODULES[db.module];
+  if(!t) return;
+  var rec = db.records[t.id] || {};
+  var done = cls.students.filter(function(s){ return rec[s.id]; });
+
+  var html = done.length
+    ? done.map(function(s){
+        return '<button class="passchip" data-unpass="' + s.id + '">' + esc(s.name) + '</button>';
+      }).join('')
+    : '<div class="empty" style="padding:24px 0">还没有人' + M.okLabel + '</div>';
+
+  openSheet('<div class="sheet-title">已' + M.okLabel + ' · ' + done.length + ' 人</div>' +
+    '<div class="sheet-sub">点名字可以撤销，让他回到名单里。</div>' +
+    '<div class="passgrid">' + html + '</div>' +
+    '<div class="sheet-actions"><button class="btn ghost" data-close>关闭</button></div>');
+}
+
+/* ---------- 更多操作 ---------- */
+function openMore(){
+  var t = curTask(), M = MODULES[db.module];
+  if(!t){ toast('先新建一项'); return; }
+  var tid = t.id;
+
+  openSheet('<div class="sheet-title">' + M.label + '</div>' +
+    '<div class="sheet-sub">' + esc(t.title) + ' · ' + fmtDate(t.date) + '</div>' +
+    '<div class="setsec" style="padding:0 12px">' +
+      '<button class="btn ghost wide" id="mCopy">' + (M.mode === 'mark' ? '复制未交名单' : '复制未过关名单') + '</button>' +
+      '<button class="btn ghost wide" id="mCopySum">复制汇总</button>' +
+      (M.mode === 'mark'
+        ? '<button class="btn ghost wide" id="mAll">全部标为' + M.okLabel + '</button>'
+        : '<button class="btn ghost wide" id="mAll">全部标为' + M.okLabel + '</button>') +
+      '<button class="btn danger wide" id="mClear">清空本项</button>' +
+    '</div>' +
+    '<div class="sheet-actions"><button class="btn ghost" data-close>关闭</button></div>');
+
+  $('#mCopy').onclick = copyAbsent;
+  $('#mCopySum').onclick = copySummary;
+  $('#mAll').onclick = function(){
+    var cls = curClass();
+    if(M.mode === 'mark'){ delete db.records[tid]; }
+    else {
+      var rec = db.records[tid] || (db.records[tid] = {});
+      cls.students.forEach(function(s){ rec[s.id] = 1; });
+    }
+    save(); closeSheet(); renderMain(); renderTabs();
+    toast('已全部标为' + M.okLabel);
+  };
+  $('#mClear').onclick = function(){
+    closeSheet();
+    setTimeout(function(){
+      confirmSheet('清空这一项的全部记录？', function(){
+        delete db.records[tid];
+        delete db.notes[tid];
+        save(); renderMain(); renderTabs();
+      });
+    }, 200);
+  };
+}
+
+/* ---------- 姓名列表 / 复制 ---------- */
+function listOf(type){
+  var t = curTask(), cls = curClass(), M = MODULES[db.module];
+  var rec = t ? (db.records[t.id] || {}) : {};
+  var out = [];
+  cls.students.forEach(function(s){
+    var marked = !!rec[s.id];
+    var isDone = (M.mode === 'mark') ? !marked : marked;
+    if(type === 'left' && !isDone) out.push(s.name);
+    if(type === 'done' && isDone) out.push(s.name);
+  });
+  return out;
+}
+
+function copyAbsent(){
+  var t = curTask(), cls = curClass(), M = MODULES[db.module];
+  if(!t) return;
+  var list = listOf('left');
+  var head = M.mode === 'mark' ? M.markLabel : ('未' + M.okLabel);
+  var txt = '【' + cls.name + '】' + t.title + '（' + fmtDate(t.date) + '）\n' +
+    head + ' ' + list.length + ' 人：' + (list.length ? list.join('、') : '无');
+  copyText(txt);
+}
+
+function copySummary(){
+  var t = curTask(), cls = curClass(), M = MODULES[db.module];
+  if(!t) return;
+  var left = listOf('left').length;
+  var done = listOf('done').length;
+  copyText('【' + cls.name + '】' + t.title + '（' + fmtDate(t.date) + '）\n' +
+    M.okLabel + ' ' + done + ' 人 · ' + (M.mode === 'mark' ? M.markLabel : '未' + M.okLabel) + ' ' + left + ' 人');
+}
+
+function execCopy(txt){
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.top = '-1000px';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove();
+  return ok;
+}
+
+function copyText(txt){
+  function done(ok){
+    if(ok){ toast('已复制，可以去粘贴了'); closeSheet(); }
+    else {
+      openSheet('<div class="sheet-title">手动复制</div>' +
+        '<div class="sheet-sub">长按下面的文字，全选后复制。</div>' +
+        '<textarea class="ta" rows="6" readonly>' + esc(txt) + '</textarea>' +
+        '<div class="sheet-actions"><button class="btn ghost" data-close>关闭</button></div>');
+    }
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ done(true); }, function(){ done(execCopy(txt)); });
+  } else {
+    done(execCopy(txt));
+  }
+}
+
+/* ---------- 单个学生历史 ---------- */
+function openStudentHistory(sid){
+  var cls = curClass();
+  var s = null;
+  cls.students.forEach(function(x){ if(x.id === sid) s = x; });
+  if(!s) return;
+
+  var rows = [];
+  MKEYS.forEach(function(k){
+    var M = MODULES[k];
+    db.tasks[k].forEach(function(t){
+      var marked = !!(db.records[t.id] || {})[sid];
+      var isDone = (M.mode === 'mark') ? !marked : marked;
+      if(!isDone) rows.push({ k:k, t:t, ok:false, note:(db.notes[t.id] || {})[sid] || '' });
+    });
+  });
+  rows.sort(function(a, b){ return a.t.date < b.t.date ? 1 : (a.t.date > b.t.date ? -1 : 0); });
+
+  var html = rows.map(function(r){
+    var M = MODULES[r.k];
+    return '<div class="histrow"><div class="hl">' +
+      '<div class="ht">' + esc(r.t.title) + '</div>' +
+      '<div class="hm">' + M.label + ' · ' + fmtDate(r.t.date) + (r.note ? ' · ' + esc(r.note) : '') + '</div>' +
+      '</div><span class="histbadge no">未完成</span></div>';
+  }).join('');
+
+  openSheet('<div class="sheet-title">' + esc(s.name) + '</div>' +
+    '<div class="sheet-sub">' + (rows.length ? '未完成的有 ' + rows.length + ' 项，最近的在上。' : '所有登记项都完成了。') + '</div>' +
+    '<div class="histlist">' + (html || '<div class="empty" style="padding:30px 0">很干净</div>') + '</div>' +
+    '<div class="sheet-actions"><button class="btn ghost" data-close>关闭</button></div>');
+}
+
+/* ---------- 设置 ---------- */
+function openSettings(){
+  var cls = curClass();
+  var names = cls.students.map(function(s){ return s.name; }).join('\n');
+  openSheet(
+    '<div class="sheet-title">设置</div>' +
+    '<div class="setsec">' +
+      '<div class="setlabel">当前班级名称</div>' +
+      '<input class="inp" id="setName" value="' + esc(cls.name) + '" />' +
+      '<div class="setlabel">学生名单（一行一个，也可用逗号、空格分隔）</div>' +
+      '<textarea class="ta" id="setRoster" rows="9" placeholder="张三&#10;李四&#10;王五">' + esc(names) + '</textarea>' +
+    '</div>' +
+    '<div class="sheet-actions">' +
+      '<button class="btn ghost" id="switchCls">切换班级</button>' +
+      '<button class="btn primary" id="saveRoster">保存</button>' +
+    '</div>' +
+    '<div class="setsec" style="border-top:8px solid #f4f5f6;padding-top:4px">' +
+      '<div class="setlabel" style="margin-top:16px">数据</div>' +
+      '<button class="btn ghost wide" id="expSum2">导出汇总表（CSV）</button>' +
+      '<button class="btn ghost wide" id="expDetail2">导出明细表（CSV）</button>' +
+      '<button class="btn ghost wide" id="backup">导出备份文件</button>' +
+      '<button class="btn ghost wide" id="restore">从备份恢复</button>' +
+      '<button class="btn danger wide" id="wipe">清空所有数据</button>' +
+      '<input type="file" id="fileInput" accept=".json,application/json" style="display:none" />' +
+      '<div class="sheet-sub" style="padding:6px 0 10px">数据只存在这台设备的浏览器里，不上传服务器。</div>' +
+    '</div>'
+  );
+
+  $('#switchCls').onclick = function(){ closeSheet(); setTimeout(openClassList, 220); };
+
+  $('#saveRoster').onclick = function(){
+    var newName = $('#setName').value.trim() || cls.name;
+    var names2 = parseNames($('#setRoster').value);
+    var old = cls.students.slice();
+    var used = [];
+    var students = names2.map(function(n){
+      var hit = -1;
+      for(var i=0;i<old.length;i++){
+        if(used.indexOf(i) < 0 && old[i].name === n){ hit = i; break; }
+      }
+      if(hit >= 0){ used.push(hit); return old[hit]; }
+      return { id: uid('s'), name: n };
+    });
+    cls.name = newName;
+    cls.students = students;
+    save(); closeSheet();
+    renderAll();
+    toast('已保存：' + newName + ' · ' + students.length + ' 人');
+  };
+
+  $('#expSum2').onclick = exportSummary;
+  $('#expDetail2').onclick = exportDetail;
+  $('#backup').onclick = exportBackup;
+  $('#restore').onclick = function(){ $('#fileInput').click(); };
+
+  $('#fileInput').onchange = function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        db = normalize(JSON.parse(String(reader.result)));
+        save(); closeSheet(); renderAll();
+        toast('备份已恢复');
+      } catch(err){
+        toast('文件格式不对，无法恢复');
+      }
+    };
+    reader.readAsText(f);
+  };
+
+  $('#wipe').onclick = function(){
+    confirmSheet('确定清空全部数据？名单、记录、备注都会没', function(){
+      db = defaultDB();
+      save(); closeSheet(); renderAll();
+      toast('已清空');
+    });
+  };
+}
+
+function parseNames(text){
+  return String(text || '')
+    .split(/[\n\r,，、;；\t ]+/)
+    .map(function(s){ return s.replace(/^[\s\-•·.、]+/, '').trim(); })
+    .filter(function(s){ return s.length > 0; });
+}
+
+/* ======================= 导出 ======================= */
+function csvCell(v){
+  var s = String(v == null ? '' : v);
+  if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function downloadFile(name, content){
+  try {
+    var blob = new Blob(['\ufeff' + content], { type:'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+    toast('已开始下载：' + name);
+  } catch(e){
+    toast('导出失败，请换用 Safari 打开');
+  }
+}
+
+function exportSummary(){
+  var short = { homework:'作业', correction:'订正', recite:'背诵', dictation:'默写' };
+  var head = ['班级','学生'];
+  MKEYS.forEach(function(k){
+    head.push(short[k] + '-完成', short[k] + '-未完成');
+  });
+  head.push('未完成合计');
+
+  var lines = [head.map(csvCell).join(',')];
+  db.classes.forEach(function(cls){
+    var st = collectStats(cls).data;
+    cls.students.forEach(function(s){
+      var row = [cls.name, s.name];
+      var sum = 0;
+      MKEYS.forEach(function(k){
+        var o = st[s.id][k];
+        row.push(o.done, o.left);
+        sum += o.left;
+      });
+      row.push(sum);
+      lines.push(row.map(csvCell).join(','));
+    });
+  });
+  downloadFile('班级登记_汇总_' + todayStr() + '.csv', lines.join('\r\n'));
+}
+
+function exportDetail(){
+  var head = ['班级','模块','登记项','日期','学生','状态','备注'];
+  var lines = [head.map(csvCell).join(',')];
+  db.classes.forEach(function(cls){
+    MKEYS.forEach(function(k){
+      var M = MODULES[k];
+      db.tasks[k].forEach(function(t){
+        var rec = db.records[t.id] || {};
+        var notes = db.notes[t.id] || {};
+        cls.students.forEach(function(s){
+          var marked = !!rec[s.id];
+          var isDone = (M.mode === 'mark') ? !marked : marked;
+          if(isDone && !notes[s.id]) return;   // 只导异常与有备注的
+          lines.push([cls.name, M.label, t.title, t.date, s.name,
+            isDone ? M.okLabel : M.markLabel, notes[s.id] || ''].map(csvCell).join(','));
+        });
+      });
+    });
+  });
+  downloadFile('班级登记_明细_' + todayStr() + '.csv', lines.join('\r\n'));
+}
+
+function exportBackup(){
+  try {
+    var blob = new Blob([JSON.stringify(db, null, 2)], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '班级工作台_备份_' + todayStr() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+    toast('备份已下载，请存到「文件」里');
+  } catch(e){ toast('备份失败'); }
+}
+
+/* ======================= 事件 ======================= */
+document.addEventListener('click', function(e){
+  var el;
+
+  if(e.target.id === 'mask' || e.target.closest('[data-close]')){
+    closeSheet();
+    return;
+  }
+
+  /* 底部模块 */
+  el = e.target.closest('[data-mod]');
+  if(el){
+    var m = el.dataset.mod;
+    if(db.module !== m){
+      pruneAutoEmpty();
+      db.module = m;
+      filterBad = false;
+      save();
+      renderTabs();
+      renderMain();
+    }
+    return;
+  }
+
+  /* 学生 */
+  el = e.target.closest('.stu');
+  if(el){
+    if(longFired){ longFired = false; return; }
+    tapStudent(el);
+    return;
+  }
+
+  /* 状态条按钮 */
+  el = e.target.closest('[data-act]');
+  if(el){
+    var a = el.dataset.act;
+    if(a === 'more'){ openMore(); return; }
+    if(a === 'passed'){ openPassedList(); return; }
+    if(a === 'onlybad'){ filterBad = !filterBad; renderStatus(); renderGrid(); return; }
+    if(a === 'settings'){ openSettings(); return; }
+  }
+
+  /* 已过关名单里撤销 */
+  el = e.target.closest('[data-unpass]');
+  if(el){
+    var t0 = curTask();
+    if(t0){
+      var r0 = db.records[t0.id] || {};
+      delete r0[el.dataset.unpass];
+      save(); closeSheet(); renderMain(); renderTabs();
+    }
+    return;
+  }
+
+  /* 统计行 */
+  el = e.target.closest('[data-sid]');
+  if(el){ openStudentHistory(el.dataset.sid); return; }
+
+  /* 班级 */
+  el = e.target.closest('[data-cls]');
+  if(el){
+    db.activeClass = el.dataset.cls;
+    filterBad = false;
+    save(); closeSheet(); renderAll();
+    return;
+  }
+
+  /* 登记项 */
+  el = e.target.closest('[data-pick]');
+  if(el){
+    db.activeTask[db.module] = el.dataset.pick;
+    filterBad = false;
+    save(); closeSheet(); renderMain(); renderTabs();
+    return;
+  }
+
+  el = e.target.closest('[data-rename]');
+  if(el){
+    var tid = el.dataset.rename;
+    var tk = null;
+    db.tasks[db.module].forEach(function(t){ if(t.id === tid) tk = t; });
+    if(!tk) return;
+    askText('修改标题', tk.title, function(v){
+      tk.title = v; tk.auto = false;
+      save(); renderMain();
+      setTimeout(openTaskList, 200);
+    });
+    return;
+  }
+
+  el = e.target.closest('[data-deltask]');
+  if(el){
+    var did = el.dataset.deltask;
+    confirmSheet('删除这一项？记录会一起没', function(){
+      db.tasks[db.module] = db.tasks[db.module].filter(function(t){ return t.id !== did; });
+      delete db.records[did];
+      delete db.notes[did];
+      if(db.activeTask[db.module] === did) db.activeTask[db.module] = null;
+      save(); renderMain(); renderTabs();
+      toast('已删除');
+    });
+    return;
+  }
+});
+
+/* 顶栏 */
+$('#clsBtn').onclick = openClassList;
+$('#setBtn').onclick = openSettings;
+$('#taskBtn').onclick = openTaskList;
+$('#addTaskBtn').onclick = newTaskFlow;
+
+/* 长按备注 */
+var gridEl = $('#grid');
+gridEl.addEventListener('pointerdown', function(e){
+  var b = e.target.closest('.stu');
+  if(!b) return;
+  clearTimeout(pressTimer);
+  var sid = b.dataset.id;
+  pressTimer = setTimeout(function(){
+    longFired = true;
+    if(navigator.vibrate){ try{ navigator.vibrate(14); }catch(err){} }
+    openStudentSheet(sid);
+  }, 430);
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+  gridEl.addEventListener(ev, function(){ clearTimeout(pressTimer); });
+});
+
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden') save();
+});
+
+/* ======================= 启动 ======================= */
+function boot(){
+  try {
+    localStorage.setItem('__cb_test__', '1');
+    localStorage.removeItem('__cb_test__');
+  } catch(e){
+    setTimeout(function(){ toast('当前浏览器无法保存数据，请用 Safari 普通模式打开'); }, 800);
+  }
+  db.module = 'homework';
+  ensureTask();
+  renderAll();
+}
+
+boot();
+
+})();
+</script>
+</body>
+</html>
